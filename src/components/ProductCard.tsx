@@ -17,9 +17,9 @@ export default function ProductCard({ product }: ProductCardProps) {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden border border-gray-100">
+    <div className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden border border-gray-100 flex flex-col h-full">
       {/* Imagen optimizada para mobile */}
-      <div className="relative aspect-square bg-gray-100 sm:aspect-video md:aspect-square">
+      <div className="relative aspect-square bg-gray-100 sm:aspect-video md:aspect-square flex-shrink-0">
         {(product.image || product.thumbnail || product.imageUrl) ? (
           <Image
             src={product.image || product.thumbnail || product.imageUrl || ''}

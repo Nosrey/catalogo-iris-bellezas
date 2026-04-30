@@ -88,14 +88,14 @@ export default function Pagination({
             {visiblePages.map((page, index) => (
               <div key={index} className="flex-shrink-0">
                 {page === '...' ? (
-                  <span className="px-2 py-2 text-gray-500 text-sm">...</span>
+                  <span className="px-2 py-2 text-gray-600 text-sm">...</span>
                 ) : (
                   <button
                     onClick={() => onPageChange(page as number)}
                     className={`px-2 py-2 rounded-lg border transition-colors text-sm ${
                       currentPage === page
                         ? 'bg-blue-500 text-white border-blue-500'
-                        : 'border-gray-300 hover:bg-gray-50'
+                        : 'border-gray-300 text-gray-900 hover:bg-gray-50'
                     }`}
                   >
                     {page}
@@ -161,14 +161,14 @@ export default function Pagination({
             {visiblePages.map((page, index) => (
               <div key={index}>
                 {page === '...' ? (
-                  <span className="px-3 py-2 text-gray-500">...</span>
+                  <span className="px-3 py-2 text-gray-600">...</span>
                 ) : (
                   <button
                     onClick={() => onPageChange(page as number)}
                     className={`px-3 py-2 rounded-lg border transition-colors ${
                       currentPage === page
                         ? 'bg-blue-500 text-white border-blue-500'
-                        : 'border-gray-300 hover:bg-gray-50'
+                        : 'border-gray-300 text-gray-900 hover:bg-gray-50'
                     }`}
                   >
                     {page}

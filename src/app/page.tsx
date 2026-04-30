@@ -104,79 +104,81 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header optimizado para mobile */}
-      <header className="bg-white shadow-sm sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
-          <div className="flex items-center justify-between h-14 sm:h-16">
-            <div className="flex items-center">
-              <h1 className="text-lg sm:text-2xl font-bold text-gray-900">Catálogo</h1>
-            </div>
-            
-            <div className="flex-1 max-w-sm sm:max-w-md mx-2 sm:mx-8">
-              <SearchBar onSearch={handleSearch} />
-            </div>
-            
-            <div className="flex items-center space-x-2 sm:space-x-4">
-              <span className="text-xs sm:text-sm text-gray-500 hidden sm:block">
-                {filteredProducts.length} productos
-              </span>
+    <>
+      <div className="min-h-screen bg-gray-50">
+        {/* Header optimizado para mobile */}
+        <header className="bg-white shadow-sm sticky top-0 z-40">
+          <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
+            <div className="flex items-center justify-between h-14 sm:h-16">
+              <div className="flex items-center">
+                <h1 className="text-lg sm:text-2xl font-bold text-gray-900">Catálogo</h1>
+              </div>
+              
+              <div className="flex-1 max-w-sm sm:max-w-md mx-2 sm:mx-8">
+                <SearchBar onSearch={handleSearch} />
+              </div>
+              
+              <div className="flex items-center space-x-2 sm:space-x-4">
+                <span className="text-xs sm:text-sm text-gray-500 hidden sm:block">
+                  {filteredProducts.length} productos
+                </span>
+              </div>
             </div>
           </div>
-        </div>
-      </header>
+        </header>
 
-      {/* Main Content con layout mobile-first */}
-      <main className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-8">
-        {/* Hero Section optimizado para mobile */}
-        <div className="mb-6 sm:mb-8">
-          <div className="text-center">
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-900">
-              Nuestros Productos
-            </h2>
-            <p className="mt-2 sm:mt-4 max-w-2xl mx-auto text-sm sm:text-base lg:text-xl text-gray-500 px-4">
-              Descubre nuestra selección de productos de alta calidad
-            </p>
-          </div>
-        </div>
-
-        {/* Layout con sidebar en desktop, apilado en mobile */}
-        <div className="flex flex-col lg:flex-row gap-4 lg:gap-8">
-          {/* Filtros - sidebar en desktop, arriba en mobile */}
-          <div className="lg:w-64 lg:flex-shrink-0">
-            <Filters
-              filters={filters}
-              onFiltersChange={setFilters}
-              availableBrands={availableBrands}
-            />
-          </div>
-
-          {/* Productos */}
-          <div className="flex-1">
-            {/* Contador de productos mobile */}
-            <div className="lg:hidden mb-4 flex items-center justify-between">
-              <span className="text-sm text-gray-600">
-                {filteredProducts.length} productos encontrados
-              </span>
+        {/* Main Content con layout mobile-first */}
+        <main className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-8">
+          {/* Hero Section optimizado para mobile */}
+          <div className="mb-6 sm:mb-8">
+            <div className="text-center">
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-900">
+                Nuestros Productos
+              </h2>
+              <p className="mt-2 sm:mt-4 max-w-2xl mx-auto text-sm sm:text-base lg:text-xl text-gray-500 px-4">
+                Descubre nuestra selección de productos de alta calidad
+              </p>
             </div>
+          </div>
 
-            <ProductGrid products={paginatedProducts} loading={loading} />
-            
-            {/* Paginación */}
-            {!loading && paginatedProducts.length > 0 && (
-              <Pagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={handlePageChange}
-                itemsPerPage={ITEMS_PER_PAGE}
-                totalItems={filteredProducts.length}
+          {/* Layout con sidebar en desktop, apilado en mobile */}
+          <div className="flex flex-col lg:flex-row gap-4 lg:gap-8">
+            {/* Filtros - sidebar en desktop, arriba en mobile */}
+            <div className="lg:w-64 lg:flex-shrink-0">
+              <Filters
+                filters={filters}
+                onFiltersChange={setFilters}
+                availableBrands={availableBrands}
               />
-            )}
-          </div>
-        </div>
-      </main>
+            </div>
 
+            {/* Productos */}
+            <div className="flex-1">
+              {/* Contador de productos mobile */}
+              <div className="lg:hidden mb-4 flex items-center justify-between">
+                <span className="text-sm text-gray-600">
+                  {filteredProducts.length} productos encontrados
+                </span>
+              </div>
+
+              <ProductGrid products={paginatedProducts} loading={loading} />
+              
+              {/* Paginación */}
+              {!loading && paginatedProducts.length > 0 && (
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
+                  itemsPerPage={ITEMS_PER_PAGE}
+                  totalItems={filteredProducts.length}
+                />
+              )}
+            </div>
+          </div>
+        </main>
+      </div>
+      
       <Cart />
-    </div>
+    </>
   );
 }

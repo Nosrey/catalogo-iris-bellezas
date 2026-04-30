@@ -25,7 +25,7 @@ export default function Cart() {
       setShowConfirmModal(true);
       setHasCheckedPreviousOrder(true);
     }
-  }, [isMounted, items.length, hasCheckedPreviousOrder]);
+  }, [isMounted, hasCheckedPreviousOrder]);
 
   const handleWhatsAppCheckout = (e: React.MouseEvent | React.FormEvent) => {
     // Previene que el navegador intente hacer un submit o recargar si es un form

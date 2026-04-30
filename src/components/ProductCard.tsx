@@ -1,8 +1,10 @@
 'use client';
 
+import { useState } from 'react';
 import Image from 'next/image';
 import { Product } from '@/types/product';
 import { useCartStore } from '@/store/useCartStore';
+import { useProductModalStore } from '@/store/useProductModalStore';
 import { ShoppingCart, Plus } from 'lucide-react';
 
 interface ProductCardProps {
@@ -11,15 +13,23 @@ interface ProductCardProps {
 
 export default function ProductCard({ product }: ProductCardProps) {
   const addToCart = useCartStore((state) => state.addToCart);
+  const { openModal } = useProductModalStore();
 
   const handleAddToCart = () => {
     addToCart(product);
   };
 
+  const truncateName = (name: string, maxLength: number = 34) => {
+    return name.length > maxLength ? name.substring(0, maxLength) + '...' : name;
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden border border-gray-100 flex flex-col h-full">
       {/* Imagen optimizada para mobile */}
-      <div className="relative aspect-square bg-gray-100 sm:aspect-video md:aspect-square flex-shrink-0">
+      <div 
+        className="relative aspect-square bg-gray-100 sm:aspect-video md:aspect-square flex-shrink-0 cursor-pointer"
+        onClick={() => openModal(product)}
+      >
         {(product.image || product.thumbnail || product.imageUrl) ? (
           <Image
             src={product.image || product.thumbnail || product.imageUrl || ''}
@@ -64,8 +74,8 @@ export default function ProductCard({ product }: ProductCardProps) {
       
       {/* Contenido optimizado para mobile */}
       <div className="p-3 sm:p-4">
-        <h3 className="font-semibold text-sm sm:text-base text-gray-900 mb-2 line-clamp-2 min-h-[2.5rem]">
-          {product.name}
+        <h3 className="font-semibold text-sm sm:text-base text-gray-900 mb-2 min-h-[1.5rem]">
+          {truncateName(product.name)}
         </h3>
         
         <p className="text-gray-600 text-xs sm:text-sm mb-3 line-clamp-2 min-h-[2rem]">

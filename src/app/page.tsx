@@ -10,6 +10,7 @@ import { subscribeToExchangeRates } from '@/lib/exchange-rates';
 import SearchBar from '@/components/SearchBar';
 import ProductGrid from '@/components/ProductGrid';
 import Cart from '@/components/Cart';
+import ProductModal from '@/components/ProductModal';
 import Filters, { FilterOptions as FilterOptionsType } from '@/components/Filters';
 import Pagination from '@/components/Pagination';
 
@@ -179,6 +180,7 @@ export default function Home() {
       </div>
       
       <Cart />
+      <ProductModal />
     </>
   );
 }

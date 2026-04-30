@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useCartStore } from '@/store/useCartStore';
+import { useProductModalStore } from '@/store/useProductModalStore';
 import { ShoppingCart, X, Minus, Plus, Trash2, MessageCircle, ShoppingBag } from 'lucide-react';
 
 export default function Cart() {
@@ -10,6 +11,7 @@ export default function Cart() {
   const [hasCheckedPreviousOrder, setHasCheckedPreviousOrder] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const { items, removeFromCart, updateQuantity, clearCart, getTotal, getItemCount } = useCartStore();
+  const { closeModal: closeProductModal } = useProductModalStore();
 
   const total = getTotal();
   const itemCount = getItemCount();
@@ -114,7 +116,10 @@ export default function Cart() {
     <>
       {/* Botón flotante del carrito */}
       <button
-        onClick={() => setIsOpen(true)}
+        onClick={() => {
+          closeProductModal();
+          setIsOpen(true);
+        }}
         className="!fixed !bottom-6 !right-6 !bg-blue-600 hover:!bg-blue-700 !text-white !p-4 !rounded-full !shadow-xl transition-all duration-300 !flex !items-center !justify-center !z-[9999] hover:!scale-110 !w-16 !h-16"
         style={{ position: 'fixed', bottom: '1.5rem', right: '1.5rem', width: '4rem', height: '4rem' }}
         title="Ver carrito"

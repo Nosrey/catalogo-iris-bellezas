@@ -35,7 +35,7 @@ export default function Cart() {
 
     if (items.length === 0) return;
 
-    const phoneNumber = '584125410165';
+    const phoneNumber = '584141979720';
     const message = items
       .map((item, index) => {
         const unitPrice = item.adaptedPrices

@@ -4,8 +4,6 @@ const nextConfig: NextConfig = {
   /* config options here */
   reactCompiler: true,
   output: 'export',
-  basePath: '/catalogo-iris-bellezas',
-  assetPrefix: '/catalogo-iris-bellezas',
   images: {
     unoptimized: true,
     remotePatterns: [

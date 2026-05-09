@@ -3,6 +3,7 @@ import { db } from './firebase';
 import { Product, convertTimestamp } from '@/types/product';
 import { getTotalStock, subscribeToInventories } from './inventories';
 import { calculateAdaptedPrices, getCachedExchangeRates, subscribeToExchangeRates } from './exchange-rates';
+import { calculateProductPopularity, subscribeToPopularity, isProductPopular } from './history';
 
 // Cache en memoria para productos
 let productsCache: Product[] = [];
@@ -45,6 +46,29 @@ const convertFirebaseProduct = (id: string, data: any): Product => {
 export const subscribeToProducts = (subscriber: ProductsSubscriber) => {
   subscribers.add(subscriber);
   
+  // Cargar popularidad inicial
+  calculateProductPopularity();
+  
+  // Suscribirse a actualizaciones de popularidad
+  subscribeToPopularity((popularity) => {
+    // Actualizar productos con nueva popularidad (sin ordenar automáticamente)
+    productsCache = productsCache.map(product => ({
+      ...product,
+      popularity: popularity[String(product.id)] || 0,
+      isPopular: isProductPopular(String(product.id))
+    }));
+    
+    // Notificar a todos los suscriptores
+    subscribers.forEach(sub => {
+      try {
+        sub.onProductsUpdate(productsCache);
+      } catch (error) {
+        console.error('Error notifying subscriber:', error);
+        sub.onError?.(error as Error);
+      }
+    });
+  });
+  
   // Si ya hay cache, enviar datos inmediatamente
   if (productsCache.length > 0) {
     subscriber.onProductsUpdate(productsCache);
@@ -57,7 +81,7 @@ export const subscribeToProducts = (subscriber: ProductsSubscriber) => {
     
     const unsubscribe = onSnapshot(
       q,
-      (snapshot) => {
+      async (snapshot) => {
         const products: Product[] = [];
         
         snapshot.forEach((doc) => {
@@ -79,13 +103,22 @@ export const subscribeToProducts = (subscriber: ProductsSubscriber) => {
           products.push(product);
         });
         
-        productsCache = products;
+        // Obtener popularidad actual
+        const popularity = await calculateProductPopularity();
+        
+        // Agregar popularidad a productos (sin ordenar automáticamente)
+        productsCache = products.map(product => ({
+          ...product,
+          popularity: popularity[String(product.id)] || 0,
+          isPopular: isProductPopular(String(product.id))
+        }));
+        
         lastUpdate = Date.now();
         
         // Notificar a todos los suscriptores
         subscribers.forEach(sub => {
           try {
-            sub.onProductsUpdate(products);
+            sub.onProductsUpdate(productsCache);
           } catch (error) {
             console.error('Error notifying subscriber:', error);
             sub.onError?.(error as Error);

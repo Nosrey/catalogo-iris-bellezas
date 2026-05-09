@@ -2,16 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import { useCartStore } from '@/store/useCartStore';
-import { useProductModalStore } from '@/store/useProductModalStore';
+import { useCartUIStore } from '@/store/useCartUIStore';
 import { ShoppingCart, X, Minus, Plus, Trash2, MessageCircle, ShoppingBag } from 'lucide-react';
 
 export default function Cart() {
-  const [isOpen, setIsOpen] = useState(false);
+  const { isOpen, openCart, closeCart } = useCartUIStore();
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [hasCheckedPreviousOrder, setHasCheckedPreviousOrder] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const { items, removeFromCart, updateQuantity, clearCart, getTotal, getItemCount } = useCartStore();
-  const { closeModal: closeProductModal } = useProductModalStore();
 
   const total = getTotal();
   const itemCount = getItemCount();
@@ -38,24 +37,22 @@ export default function Cart() {
     const phoneNumber = '584141979720';
     const message = items
       .map((item, index) => {
-        const unitPrice = item.adaptedPrices
+        const unitPriceBs = item.adaptedPrices
           ? `Bs. ${item.adaptedPrices.bs.toLocaleString()}`
-          : `$${item.price.toFixed(2)}`;
-        const itemTotal = item.adaptedPrices
+          : `Bs. ${(item.price * 35).toLocaleString()}`;
+        const unitPriceUsd = `$${item.price.toFixed(2)}`;
+        const itemTotalBs = item.adaptedPrices
           ? `Bs. ${(item.adaptedPrices.bs * item.quantity).toLocaleString()}`
-          : `$${(item.price * item.quantity).toFixed(2)}`;
-        return `${index + 1}. ID: ${item.id}\n   ${item.quantity}x ${item.name}\n   Precio unitario: ${unitPrice}\n   Total: ${itemTotal}`;
+          : `Bs. ${(item.price * 35 * item.quantity).toLocaleString()}`;
+        const itemTotalUsd = `$${(item.price * item.quantity).toFixed(2)}`;
+        return `${index + 1}. ID: ${item.id}\n   ${item.quantity}x ${item.name}\n   Precio unitario: ${unitPriceBs} (${unitPriceUsd})\n   Total: ${itemTotalBs} (${itemTotalUsd})`;
       })
       .join('\n\n');
 
-    const totalBs = items.reduce((sum, item) => sum + (item.adaptedPrices?.bs || item.price) * item.quantity, 0);
+    const totalBs = items.reduce((sum, item) => sum + (item.adaptedPrices?.bs || item.price * 35) * item.quantity, 0);
+    const totalUsd = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
-    // Aquí usamos tu variable 'total' que ya tienes definida fuera
-    const totalText = items[0]?.adaptedPrices
-      ? `Bs. ${totalBs.toLocaleString()}`
-      : `$${total.toFixed(2)}`;
-
-    const fullMessage = `Hola! Quiero realizar el siguiente pedido:\n\n${message}\n\nTOTAL DEL PEDIDO: ${totalText}`;
+    const fullMessage = `Hola! Quiero realizar el siguiente pedido:\n\n${message}\n\nTOTAL DEL PEDIDO: Bs. ${totalBs.toLocaleString()} ($${totalUsd.toFixed(2)})`;
 
     const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(fullMessage)}`;
 
@@ -70,7 +67,7 @@ export default function Cart() {
 
   const handleConfirmOrder = () => {
     clearCart();
-    setIsOpen(false);
+    closeCart();
     setShowConfirmModal(false);
   };
 
@@ -117,8 +114,7 @@ export default function Cart() {
       {/* Botón flotante del carrito */}
       <button
         onClick={() => {
-          closeProductModal();
-          setIsOpen(true);
+          openCart();
         }}
         className="!fixed !bottom-6 !right-6 !bg-blue-600 hover:!bg-blue-700 !text-white !p-4 !rounded-full !shadow-xl transition-all duration-300 !flex !items-center !justify-center !z-[9999] hover:!scale-110 !w-16 !h-16"
         style={{ position: 'fixed', bottom: '1.5rem', right: '1.5rem', width: '4rem', height: '4rem' }}
@@ -148,7 +144,7 @@ export default function Cart() {
                 </div>
               </div>
               <button
-                onClick={() => setIsOpen(false)}
+                onClick={() => closeCart()} // Use the global UI store for closing
                 className="p-2 hover:bg-gray-100 rounded-full transition-colors"
                 title="Cerrar"
               >

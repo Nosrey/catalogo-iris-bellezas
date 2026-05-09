@@ -7,12 +7,15 @@ import { subscribeToInventories } from '@/lib/inventories';
 import { filterProducts, FilterOptions } from '@/lib/filters';
 import { subscribeToBrands, Brand } from '@/lib/brands';
 import { subscribeToExchangeRates } from '@/lib/exchange-rates';
+import { useCartStore } from '@/store/useCartStore';
+import { useCartUIStore } from '@/store/useCartUIStore';
 import SearchBar from '@/components/SearchBar';
 import ProductGrid from '@/components/ProductGrid';
 import Cart from '@/components/Cart';
 import ProductModal from '@/components/ProductModal';
 import Filters, { FilterOptions as FilterOptionsType } from '@/components/Filters';
 import Pagination from '@/components/Pagination';
+import { ShoppingCart } from 'lucide-react';
 
 export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -24,8 +27,17 @@ export default function Home() {
     searchTerm: '',
     minPrice: 0,
     maxPrice: Infinity,
-    selectedBrands: []
+    selectedBrands: [],
+    sortBy: 'default'
   });
+  const { items, getTotal } = useCartStore();
+  const { openCart } = useCartUIStore();
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Evitar error de hidratación
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const ITEMS_PER_PAGE = 40;
   const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
@@ -142,6 +154,21 @@ export default function Home() {
             </div>
           </div>
 
+          {/* Botón de Comprar prominente */}
+          <div className="mb-6 flex justify-center">
+            <button
+              onClick={openCart}
+              disabled={!isMounted || items.length === 0}
+              className="bg-green-500 hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-8 py-3 rounded-xl transition-all duration-200 font-semibold shadow-md hover:shadow-lg flex items-center space-x-2 text-lg"
+            >
+              <ShoppingCart className="w-6 h-6" />
+              <span>Comprar</span>
+              <span className="bg-white/20 px-3 py-1 rounded-full text-sm">
+                {isMounted ? items.length : 0} {isMounted && items.length === 1 ? 'producto' : 'productos'}
+              </span>
+            </button>
+          </div>
+
           {/* Layout con sidebar en desktop, apilado en mobile */}
           <div className="flex flex-col lg:flex-row gap-4 lg:gap-8">
             {/* Filtros - sidebar en desktop, arriba en mobile */}
@@ -173,6 +200,11 @@ export default function Home() {
                   itemsPerPage={ITEMS_PER_PAGE}
                   totalItems={filteredProducts.length}
                 />
+              )}
+              
+              {/* Espacio al final cuando no hay paginación para evitar que el carrito tape el último producto */}
+              {!loading && paginatedProducts.length > 0 && totalPages <= 1 && (
+                <div className="h-24" />
               )}
             </div>
           </div>

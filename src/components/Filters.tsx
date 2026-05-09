@@ -1,14 +1,16 @@
 'use client';
 
 import { useState } from 'react';
-import { Filter, X, ChevronDown, ChevronUp } from 'lucide-react';
+import { Filter, X, ChevronDown, ChevronUp, ArrowUpDown } from 'lucide-react';
 import { Brand } from '@/lib/brands';
+import { SortOption } from '@/lib/filters';
 
 export interface FilterOptions {
   searchTerm: string;
   minPrice: number;
   maxPrice: number;
   selectedBrands: string[];
+  sortBy: SortOption;
 }
 
 interface FiltersProps {
@@ -53,12 +55,20 @@ export default function Filters({ filters, onFiltersChange, availableBrands }: F
       searchTerm: filters.searchTerm,
       minPrice: 0,
       maxPrice: Infinity,
-      selectedBrands: []
+      selectedBrands: [],
+      sortBy: 'default'
     });
   };
 
-  const hasActiveFilters = filters.minPrice > 0 || filters.maxPrice < Infinity || filters.selectedBrands.length > 0;
-  const activeFilterCount = filters.selectedBrands.length + ((filters.minPrice > 0 || filters.maxPrice < Infinity) ? 1 : 0);
+  const hasActiveFilters = filters.minPrice > 0 || filters.maxPrice < Infinity || filters.selectedBrands.length > 0 || filters.sortBy !== 'default';
+  const activeFilterCount = filters.selectedBrands.length + ((filters.minPrice > 0 || filters.maxPrice < Infinity) ? 1 : 0) + (filters.sortBy !== 'default' ? 1 : 0);
+
+  const handleSortChange = (sortBy: SortOption) => {
+    onFiltersChange({
+      ...filters,
+      sortBy
+    });
+  };
 
   // Verificar si un rango de precios está activo
   const isPriceRangeActive = (min: number, max: number) => {
@@ -153,6 +163,93 @@ export default function Filters({ filters, onFiltersChange, availableBrands }: F
             </div>
           </div>
         )}
+
+        {/* Sort Options */}
+        <div className="space-y-3">
+          <div className="flex items-center space-x-2">
+            <ArrowUpDown className="w-4 h-4 text-gray-600" />
+            <h4 className="font-medium text-gray-900 text-sm">Ordenar por</h4>
+          </div>
+          <div className="space-y-2">
+            <label className="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 p-2 rounded transition-colors">
+              <input
+                type="radio"
+                name="sortBy"
+                value="default"
+                checked={filters.sortBy === 'default'}
+                onChange={() => handleSortChange('default')}
+                className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+              />
+              <span className="text-sm text-gray-700">Predeterminado</span>
+            </label>
+            <label className="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 p-2 rounded transition-colors">
+              <input
+                type="radio"
+                name="sortBy"
+                value="name-asc"
+                checked={filters.sortBy === 'name-asc'}
+                onChange={() => handleSortChange('name-asc')}
+                className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+              />
+              <span className="text-sm text-gray-700">Nombre (A-Z)</span>
+            </label>
+            <label className="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 p-2 rounded transition-colors">
+              <input
+                type="radio"
+                name="sortBy"
+                value="name-desc"
+                checked={filters.sortBy === 'name-desc'}
+                onChange={() => handleSortChange('name-desc')}
+                className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+              />
+              <span className="text-sm text-gray-700">Nombre (Z-A)</span>
+            </label>
+            <label className="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 p-2 rounded transition-colors">
+              <input
+                type="radio"
+                name="sortBy"
+                value="popularity-desc"
+                checked={filters.sortBy === 'popularity-desc'}
+                onChange={() => handleSortChange('popularity-desc')}
+                className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+              />
+              <span className="text-sm text-gray-700">Más populares</span>
+            </label>
+            <label className="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 p-2 rounded transition-colors">
+              <input
+                type="radio"
+                name="sortBy"
+                value="popularity-asc"
+                checked={filters.sortBy === 'popularity-asc'}
+                onChange={() => handleSortChange('popularity-asc')}
+                className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+              />
+              <span className="text-sm text-gray-700">Menos populares</span>
+            </label>
+            <label className="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 p-2 rounded transition-colors">
+              <input
+                type="radio"
+                name="sortBy"
+                value="price-asc"
+                checked={filters.sortBy === 'price-asc'}
+                onChange={() => handleSortChange('price-asc')}
+                className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+              />
+              <span className="text-sm text-gray-700">Precio (menor a mayor)</span>
+            </label>
+            <label className="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 p-2 rounded transition-colors">
+              <input
+                type="radio"
+                name="sortBy"
+                value="price-desc"
+                checked={filters.sortBy === 'price-desc'}
+                onChange={() => handleSortChange('price-desc')}
+                className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+              />
+              <span className="text-sm text-gray-700">Precio (mayor a menor)</span>
+            </label>
+          </div>
+        </div>
 
         {/* Mobile Clear Button */}
         <div className="md:hidden pt-4 border-t border-gray-200">

@@ -20,6 +20,10 @@ export interface Product {
   updatedAt?: Date;
   // Precios adaptados (calculados)
   adaptedPrices?: PriceCalculation;
+  // Popularidad (número de ventas)
+  popularity?: number;
+  // Es producto popular
+  isPopular?: boolean;
 }
 
 export interface CartItem extends Omit<Product, 'createdAt' | 'updatedAt'> {

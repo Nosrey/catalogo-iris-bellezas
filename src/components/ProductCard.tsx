@@ -23,8 +23,18 @@ export default function ProductCard({ product }: ProductCardProps) {
     return name.length > maxLength ? name.substring(0, maxLength) + '...' : name;
   };
 
+  const isOutOfStock = product.stock === undefined || product.stock <= 0;
+  const isLowStock = product.stock !== undefined && product.stock > 0 && product.stock <= 5;
+  const getStockText = () => {
+    if (isOutOfStock) return 'No disponible';
+    if (isLowStock) return `Solo ${product.stock} disponibles`;
+    return 'Disponible';
+  };
+
   return (
-    <div className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden border border-gray-100 flex flex-col h-full">
+    <div className={`rounded-lg shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden border flex flex-col h-full ${
+      isOutOfStock ? 'bg-gray-100 border-gray-200' : 'bg-white border-gray-100'
+    }`}>
       {/* Imagen optimizada para mobile */}
       <div 
         className="relative aspect-square bg-gray-100 sm:aspect-video md:aspect-square flex-shrink-0 cursor-pointer"
@@ -64,21 +74,34 @@ export default function ProductCard({ product }: ProductCardProps) {
           </span>
         )}
         
-        {/* Badge de stock - nuevo */}
-        {product.stock !== undefined && product.stock > 0 && (
-          <span className="absolute top-2 left-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full shadow-sm">
-            {product.stock} u.
+        {/* Badge de popularidad */}
+        {product.isPopular && (
+          <span className="absolute bottom-2 right-2 bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-md">
+            ¡Popular!
+          </span>
+        )}
+        
+        {/* Badge de stock */}
+        {product.stock !== undefined && (
+          <span className={`absolute top-2 left-2 text-xs px-2 py-1 rounded-full shadow-sm ${
+            isOutOfStock ? 'bg-gray-500 text-white' : isLowStock ? 'bg-orange-500 text-white' : 'bg-green-500 text-white'
+          }`}>
+            {isOutOfStock ? 'Agotado' : isLowStock ? `${product.stock} u.` : 'Disponible'}
           </span>
         )}
       </div>
       
       {/* Contenido optimizado para mobile */}
       <div className="p-3 sm:p-4">
-        <h3 className="font-semibold text-sm sm:text-base text-gray-900 mb-2 min-h-[1.5rem]">
+        <h3 className={`font-semibold text-sm sm:text-base mb-2 min-h-[1.5rem] ${
+          isOutOfStock ? 'text-gray-400' : 'text-gray-900'
+        }`}>
           {truncateName(product.name)}
         </h3>
         
-        <p className="text-gray-600 text-xs sm:text-sm mb-3 line-clamp-2 min-h-[2rem]">
+        <p className={`text-xs sm:text-sm mb-3 line-clamp-2 min-h-[2rem] ${
+          isOutOfStock ? 'text-gray-400' : 'text-gray-600'
+        }`}>
           {product.description}
         </p>
         
@@ -87,35 +110,48 @@ export default function ProductCard({ product }: ProductCardProps) {
             {/* Mostrar precios adaptados */}
             {product.adaptedPrices ? (
               <div className="space-y-1">
-                <div className="flex items-baseline space-x-1">
-                  <span className="text-lg sm:text-xl font-bold text-green-600">
+                <div className={`flex items-baseline space-x-1 ${
+                  isOutOfStock ? 'text-gray-400' : 'text-green-600'
+                }`}>
+                  <span className="text-lg sm:text-xl font-bold">
                     Bs. {product.adaptedPrices.bs.toLocaleString()}
                   </span>
                 </div>
-                <div className="flex items-baseline space-x-1">
-                  <span className="text-xs sm:text-sm text-gray-500">
+                <div className={`flex items-baseline space-x-1 ${
+                  isOutOfStock ? 'text-gray-400' : 'text-gray-500'
+                }`}>
+                  <span className="text-xs sm:text-sm">
                     $ {product.adaptedPrices.usdAdjusted.toFixed(2)}
                   </span>
                 </div>
               </div>
             ) : (
-              <div className="flex items-baseline space-x-1">
-                <span className="text-lg sm:text-xl font-bold text-green-600">
+              <div className={`flex items-baseline space-x-1 ${
+                isOutOfStock ? 'text-gray-400' : 'text-green-600'
+              }`}>
+                <span className="text-lg sm:text-xl font-bold">
                   $ {product.price.toFixed(2)}
                 </span>
               </div>
             )}
             {product.stock !== undefined && (
-              <p className="text-xs text-gray-500 mt-1 hidden sm:block">
-                Stock: {product.stock} unidades
+              <p className={`text-xs mt-1 hidden sm:block ${
+                isOutOfStock ? 'text-gray-400' : 'text-gray-500'
+              }`}>
+                {getStockText()}
               </p>
             )}
           </div>
           
           <button
             onClick={handleAddToCart}
-            className="bg-blue-500 hover:bg-blue-600 text-white p-2 sm:p-3 rounded-full transition-colors duration-200 flex items-center justify-center shadow-sm hover:shadow-md ml-2"
-            title="Agregar al carrito"
+            disabled={isOutOfStock}
+            className={`p-2 sm:p-3 rounded-full transition-colors duration-200 flex items-center justify-center shadow-sm hover:shadow-md ml-2 ${
+              isOutOfStock 
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                : 'bg-blue-500 hover:bg-blue-600 text-white'
+            }`}
+            title={isOutOfStock ? 'Producto agotado' : 'Agregar al carrito'}
           >
             <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>

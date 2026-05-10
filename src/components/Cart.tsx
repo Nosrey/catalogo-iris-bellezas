@@ -3,11 +3,12 @@
 import { useState, useEffect } from 'react';
 import { useCartStore } from '@/store/useCartStore';
 import { useCartUIStore } from '@/store/useCartUIStore';
-import { ShoppingCart, X, Minus, Plus, Trash2, MessageCircle, ShoppingBag } from 'lucide-react';
+import { ShoppingCart, X, Minus, Plus, Trash2, MessageCircle, ShoppingBag, DollarSign, Clock, AlertTriangle } from 'lucide-react';
 
 export default function Cart() {
   const { isOpen, openCart, closeCart } = useCartUIStore();
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showPriceWarningModal, setShowPriceWarningModal] = useState(false);
   const [hasCheckedPreviousOrder, setHasCheckedPreviousOrder] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const { items, removeFromCart, updateQuantity, clearCart, getTotal, getItemCount } = useCartStore();
@@ -28,10 +29,17 @@ export default function Cart() {
     }
   }, [isMounted, hasCheckedPreviousOrder]);
 
-  const handleWhatsAppCheckout = (e: React.MouseEvent | React.FormEvent) => {
+  const handleInitiateCheckout = (e: React.MouseEvent | React.FormEvent) => {
     // Previene que el navegador intente hacer un submit o recargar si es un form
     if (e && e.preventDefault) e.preventDefault();
 
+    if (items.length === 0) return;
+
+    // Mostrar modal de advertencia de precios antes de proceder
+    setShowPriceWarningModal(true);
+  };
+
+  const handleWhatsAppCheckout = () => {
     if (items.length === 0) return;
 
     const phoneNumber = '584141979720';
@@ -63,6 +71,16 @@ export default function Cart() {
     setTimeout(() => {
       setShowConfirmModal(true);
     }, 1000);
+  };
+
+  const handleAcceptPriceWarning = () => {
+    setShowPriceWarningModal(false);
+    // Proceder con el checkout de WhatsApp
+    handleWhatsAppCheckout();
+  };
+
+  const handleCancelPriceWarning = () => {
+    setShowPriceWarningModal(false);
   };
 
   const handleConfirmOrder = () => {
@@ -220,11 +238,11 @@ export default function Cart() {
 
                 <div className="flex space-x-3">
                   <button
-                    onClick={handleWhatsAppCheckout}
+                    onClick={handleInitiateCheckout}
                     className="flex-1 bg-green-500 hover:bg-green-600 text-white py-3 px-4 rounded-xl flex items-center justify-center space-x-2 transition-all duration-200 font-semibold shadow-md hover:shadow-lg"
                   >
                     <MessageCircle className="w-5 h-5" />
-                    <span>Enviar Pedido</span>
+                    <span>Hacer Pedido</span>
                   </button>
 
                   <button
@@ -236,6 +254,70 @@ export default function Cart() {
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Modal de advertencia de precios */}
+      {showPriceWarningModal && (
+        <div className="fixed inset-0 bg-black/70 z-[110] flex items-center justify-center p-4 sm:p-6 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl animate-in fade-in zoom-in duration-300 border-2 border-amber-200">
+            <div className="p-6 sm:p-8">
+              {/* Header con icono de alerta */}
+              <div className="text-center mb-6">
+                <div className="mx-auto w-20 h-20 bg-gradient-to-br from-amber-100 to-orange-100 rounded-full flex items-center justify-center mb-4 shadow-lg">
+                  <div className="relative">
+                    <DollarSign className="w-10 h-10 text-amber-600" />
+                    <Clock className="w-5 h-5 text-orange-500 absolute -top-1 -right-2" />
+                  </div>
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-2 uppercase tracking-wide">
+                  Validación de Precios
+                </h3>
+              </div>
+
+              {/* Mensaje de advertencia */}
+              <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-l-4 border-amber-400 rounded-r-lg p-4 mb-6">
+                <div className="flex items-start space-x-3">
+                  <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-gray-700 text-sm leading-relaxed">
+                      Los precios mostrados son válidos únicamente hasta las 
+                      <span className="font-bold text-amber-700"> 6:00 PM </span> 
+                      del día de hoy.
+                    </p>
+                    <p className="text-gray-500 text-xs mt-2">
+                      Pasada esta hora, los precios pueden variar según las tasas de cambio actualizadas.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Hora actual y límite */}
+              <div className="flex items-center justify-center space-x-4 mb-6 text-sm">
+                <div className="flex items-center space-x-1 text-gray-600">
+                  <Clock className="w-4 h-4" />
+                  <span>Hora límite:</span>
+                </div>
+                <span className="font-bold text-amber-700 text-lg">6:00 PM</span>
+              </div>
+
+              {/* Botones de acción */}
+              <div className="flex flex-col space-y-3">
+                <button
+                  onClick={handleAcceptPriceWarning}
+                  className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white py-3 px-6 rounded-xl transition-all duration-200 font-bold shadow-lg hover:shadow-xl flex items-center justify-center space-x-2 uppercase tracking-wide"
+                >
+                  <span>Entendido, Hacer Pedido</span>
+                </button>
+                <button
+                  onClick={handleCancelPriceWarning}
+                  className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 px-6 rounded-xl transition-all duration-200 font-semibold"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

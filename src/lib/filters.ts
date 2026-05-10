@@ -45,8 +45,10 @@ export const filterProducts = (products: Product[], filters: FilterOptions): Pro
   });
   
   // Aplicar ordenamiento
+  const sorted = [...filteredProducts];
+  
   if (filters.sortBy !== 'default') {
-    const sorted = [...filteredProducts];
+    // Ordenamiento explícito seleccionado por usuario
     switch (filters.sortBy) {
       case 'name-asc':
         sorted.sort((a, b) => a.name.localeCompare(b.name));
@@ -68,6 +70,37 @@ export const filterProducts = (products: Product[], filters: FilterOptions): Pro
         break;
     }
     filteredProducts = sorted;
+  } else {
+    // Ordenamiento por defecto
+    // SI HAY BÚSQUEDA: priorizar por relevancia (ya viene ordenado de smartSearch)
+    // SI NO HAY BÚSQUEDA: priorizar productos CON STOCK primero, luego por popularidad
+    if (filters.searchTerm.trim() === '') {
+      // Sin búsqueda: ordenar por disponibilidad de stock + popularidad
+      sorted.sort((a, b) => {
+        const stockA = a.stock !== undefined && a.stock > 0 ? 1 : 0;
+        const stockB = b.stock !== undefined && b.stock > 0 ? 1 : 0;
+        
+        // Primero: productos con stock (1) vs sin stock (0)
+        if (stockA !== stockB) {
+          return stockB - stockA; // Con stock primero
+        }
+        
+        // Segundo: ordenar por popularidad (si ambos tienen o no tienen stock)
+        const popA = a.popularity || 0;
+        const popB = b.popularity || 0;
+        if (popA !== popB) {
+          return popB - popA; // Más populares primero
+        }
+        
+        // Tercero: productos populares marcados
+        if (a.isPopular && !b.isPopular) return -1;
+        if (!a.isPopular && b.isPopular) return 1;
+        
+        return 0;
+      });
+      filteredProducts = sorted;
+    }
+    // Si hay búsqueda, mantener el orden de relevancia de smartSearch
   }
   
   return filteredProducts;

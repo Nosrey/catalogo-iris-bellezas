@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Product } from '@/types/product';
-import { subscribeToProducts, getCachedProducts } from '@/lib/products-cache';
+import { subscribeToProducts, getCachedProducts, isLoadingProducts, isInitialProductLoad, preloadFromCache } from '@/lib/products-cache';
 import { subscribeToInventories } from '@/lib/inventories';
 import { filterProducts, FilterOptions } from '@/lib/filters';
 import { subscribeToBrands, Brand } from '@/lib/brands';
@@ -15,12 +15,15 @@ import Cart from '@/components/Cart';
 import ProductModal from '@/components/ProductModal';
 import Filters, { FilterOptions as FilterOptionsType } from '@/components/Filters';
 import Pagination from '@/components/Pagination';
-import { ShoppingCart } from 'lucide-react';
+import { ShoppingCart, Sparkles, Heart, Crown, Gem } from 'lucide-react';
 
 export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isUpdating, setIsUpdating] = useState(false); // Actualización en segundo plano
+  const [hasCache, setHasCache] = useState(false);
+  const [cachedCount, setCachedCount] = useState(0);
   const [availableBrands, setAvailableBrands] = useState<Brand[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [filters, setFilters] = useState<FilterOptionsType>({
@@ -47,27 +50,33 @@ export default function Home() {
   );
 
   useEffect(() => {
-    // Suscribirse a inventarios primero para tener stock disponible
+    // PRIORIDAD 1: Intentar cargar desde caché persistente INMEDIATAMENTE
+    const cachedProducts = preloadFromCache();
+    if (cachedProducts && cachedProducts.length > 0) {
+      setProducts(cachedProducts);
+      setHasCache(true);
+      setCachedCount(cachedProducts.length);
+      setLoading(false); // Mostrar datos inmediatamente
+      console.log(`[Page] Loaded ${cachedProducts.length} products from cache instantly`);
+    }
+
+    // PRIORIDAD 2: Suscribirse a inventarios para stock
     const unsubscribeInventories = subscribeToInventories({
-      onInventoriesUpdate: () => {
-        // Los inventarios se cargaron, ahora suscribirse a productos
-      },
+      onInventoriesUpdate: () => {},
       onError: (error) => {
         console.error('Error loading inventories:', error);
       }
     });
 
-    // Suscribirse a tasas de cambio primero
+    // PRIORIDAD 3: Suscribirse a tasas de cambio
     const unsubscribeExchangeRates = subscribeToExchangeRates({
-      onExchangeRatesUpdate: () => {
-        // Las tasas se cargaron, esto actualizará los productos automáticamente
-      },
+      onExchangeRatesUpdate: () => {},
       onError: (error) => {
         console.error('Error loading exchange rates:', error);
       }
     });
 
-    // Suscribirse a marcas
+    // PRIORIDAD 4: Suscribirse a marcas
     const unsubscribeBrands = subscribeToBrands({
       onBrandsUpdate: (brands) => {
         setAvailableBrands(brands);
@@ -77,17 +86,41 @@ export default function Home() {
       }
     });
 
-    // Suscribirse a actualizaciones en tiempo real de productos
+    // PRIORIDAD 5: Suscribirse a productos de Firebase
+    // Si ya tenemos caché, esto actualizará en segundo plano
     const unsubscribeProducts = subscribeToProducts({
-      onProductsUpdate: (products) => {
-        setProducts(products);
-        setLoading(false);
+      onProductsUpdate: (newProducts) => {
+        const isFirstLoad = products.length === 0;
+        const hasExistingCache = hasCache || cachedCount > 0;
+        
+        setProducts(newProducts);
+        
+        if (isFirstLoad && !hasExistingCache) {
+          // Primera carga sin caché
+          setLoading(false);
+        } else if (hasExistingCache) {
+          // Ya teníamos datos del caché, esto es una actualización
+          setIsUpdating(false);
+        }
       },
       onError: (error) => {
         console.error('Error loading products:', error);
         setLoading(false);
+        setIsUpdating(false);
       }
     });
+
+    // Detectar si Firebase está cargando (para mostrar indicador de sincronización)
+    const checkFirebaseLoading = setInterval(() => {
+      const firebaseLoading = isLoadingProducts();
+      const initialLoad = isInitialProductLoad();
+      
+      if (firebaseLoading && !initialLoad && products.length > 0) {
+        setIsUpdating(true);
+      } else if (!firebaseLoading) {
+        setIsUpdating(false);
+      }
+    }, 500);
 
     // Cleanup al desmontar
     return () => {
@@ -95,6 +128,7 @@ export default function Home() {
       unsubscribeExchangeRates();
       unsubscribeBrands();
       unsubscribeProducts();
+      clearInterval(checkFirebaseLoading);
     };
   }, []);
 
@@ -119,12 +153,20 @@ export default function Home() {
   return (
     <>
       <div className="min-h-screen bg-gray-50">
-        {/* Header optimizado para mobile */}
-        <header className="bg-white shadow-sm sticky top-0 z-40">
+        {/* Header elegante - Estilo Belleza */}
+        <header className="bg-gradient-to-r from-white via-rose-50/50 to-white shadow-sm sticky top-0 z-40 border-b border-rose-100">
           <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
             <div className="flex items-center justify-between h-14 sm:h-16">
-              <div className="flex items-center">
-                <h1 className="text-lg sm:text-2xl font-bold text-gray-900">Catálogo</h1>
+              <div className="flex items-center space-x-2">
+                <div className="bg-gradient-to-br from-rose-400 to-rose-500 p-2 rounded-lg shadow-sm">
+                  <Sparkles className="w-4 h-4 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-rose-600 to-rose-500 bg-clip-text text-transparent">
+                    Iris Bellezas
+                  </h1>
+                  <p className="text-[10px] text-gray-400 tracking-wider hidden sm:block">ELEGANCIA & ESTILO</p>
+                </div>
               </div>
               
               <div className="flex-1 max-w-sm sm:max-w-md mx-2 sm:mx-8">
@@ -132,9 +174,12 @@ export default function Home() {
               </div>
               
               <div className="flex items-center space-x-2 sm:space-x-4">
-                <span className="text-xs sm:text-sm text-gray-500 hidden sm:block">
-                  {filteredProducts.length} productos
-                </span>
+                <div className="hidden sm:flex items-center space-x-1 text-rose-400">
+                  <Heart className="w-3 h-3" />
+                  <span className="text-xs text-gray-500">
+                    {filteredProducts.length} productos
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -142,29 +187,70 @@ export default function Home() {
 
         {/* Main Content con layout mobile-first */}
         <main className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-8">
-          {/* Hero Section optimizado para mobile */}
-          <div className="mb-6 sm:mb-8">
-            <div className="text-center">
-              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-900">
-                Nuestros Productos
-              </h2>
-              <p className="mt-2 sm:mt-4 max-w-2xl mx-auto text-sm sm:text-base lg:text-xl text-gray-500 px-4">
-                Descubre nuestra selección de productos de alta calidad
-              </p>
+          {/* Hero Section Elegante - Estilo Belleza */}
+          <div className="mb-8 sm:mb-12">
+            <div className="relative">
+              {/* Decoración de fondo */}
+              <div className="absolute inset-0 overflow-hidden">
+                <div className="absolute -top-10 -right-10 w-40 h-40 bg-gradient-to-br from-rose-200/30 to-pink-300/20 rounded-full blur-3xl"></div>
+                <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-gradient-to-br from-orange-200/20 to-amber-200/30 rounded-full blur-2xl"></div>
+              </div>
+              
+              <div className="relative text-center py-8 sm:py-12 px-4">
+                {/* Elementos decorativos superiores */}
+                <div className="flex items-center justify-center space-x-3 mb-4">
+                  <div className="h-px w-12 bg-gradient-to-r from-transparent via-rose-300 to-transparent"></div>
+                  <Sparkles className="w-5 h-5 text-rose-400" />
+                  <div className="h-px w-12 bg-gradient-to-r from-transparent via-rose-300 to-transparent"></div>
+                </div>
+                
+                {/* Título principal con fuente elegante */}
+                <h2 className="font-script text-4xl sm:text-5xl lg:text-6xl text-rose-600 mb-2">
+                  Iris Bellezas
+                </h2>
+                
+                {/* Subtítulo */}
+                <div className="flex items-center justify-center space-x-2 mb-4">
+                  <Crown className="w-4 h-4 text-amber-500" />
+                  <span className="text-xs sm:text-sm tracking-[0.3em] uppercase text-gray-500 font-medium">
+                    Colección Exclusiva
+                  </span>
+                  <Crown className="w-4 h-4 text-amber-500" />
+                </div>
+                
+                {/* Descripción */}
+                <p className="max-w-2xl mx-auto text-sm sm:text-base lg:text-lg text-gray-600 leading-relaxed px-4">
+                  Descubre nuestra selección de productos premium para realzar tu belleza natural. 
+                  <span className="hidden sm:inline"> Cada pieza está cuidadosamente elegida para ti.</span>
+                </p>
+                
+                {/* Decoración inferior */}
+                <div className="flex items-center justify-center mt-6 space-x-4">
+                  <div className="flex items-center space-x-1 text-rose-400/60">
+                    <Gem className="w-3 h-3" />
+                    <div className="w-1 h-1 rounded-full bg-rose-400/60"></div>
+                    <Heart className="w-3 h-3" />
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Botón de Comprar prominente */}
-          <div className="mb-6 flex justify-center">
+          {/* Botón de Comprar elegante */}
+          <div className="mb-8 flex justify-center">
             <button
               onClick={openCart}
               disabled={!isMounted || items.length === 0}
-              className="bg-green-500 hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-8 py-3 rounded-xl transition-all duration-200 font-semibold shadow-md hover:shadow-lg flex items-center space-x-2 text-lg"
+              className="group bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 disabled:from-gray-300 disabled:to-gray-300 disabled:cursor-not-allowed text-white px-6 sm:px-8 py-3 rounded-full transition-all duration-300 font-semibold shadow-lg hover:shadow-xl hover:shadow-rose-200/50 flex items-center space-x-3 text-lg border border-rose-400/20"
             >
-              <ShoppingCart className="w-6 h-6" />
-              <span>Comprar</span>
-              <span className="bg-white/20 px-3 py-1 rounded-full text-sm">
-                {isMounted ? items.length : 0} {isMounted && items.length === 1 ? 'producto' : 'productos'}
+              {/* Icono carrito - fondo blanco sólido para contraste */}
+              <div className="bg-white p-2 rounded-full shadow-sm group-hover:scale-110 transition-transform">
+                <ShoppingCart className="w-5 h-5 text-rose-600" />
+              </div>
+              <span className="tracking-wide">HACER PEDIDO</span>
+              {/* Badge de cantidad - fondo blanco sólido con borde */}
+              <span className="bg-white text-rose-600 px-3 py-1 rounded-full text-sm font-bold shadow-sm border border-rose-100 min-w-[2rem] text-center">
+                {isMounted ? items.length : 0}
               </span>
             </button>
           </div>
@@ -189,7 +275,12 @@ export default function Home() {
                 </span>
               </div>
 
-              <ProductGrid products={paginatedProducts} loading={loading} />
+              <ProductGrid 
+                products={paginatedProducts} 
+                loading={loading} 
+                isUpdating={isUpdating}
+                cachedCount={cachedCount}
+              />
               
               {/* Paginación */}
               {!loading && paginatedProducts.length > 0 && (

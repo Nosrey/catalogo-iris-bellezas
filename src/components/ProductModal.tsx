@@ -5,6 +5,12 @@ import { useCartStore } from '@/store/useCartStore';
 import { useProductModalStore } from '@/store/useProductModalStore';
 import { ShoppingCart, X, Package, CheckCircle, AlertCircle, Heart, Sparkles, Crown } from 'lucide-react';
 
+// Normalizar texto a mayúsculas para presentación
+const normalizeText = (text: string | undefined): string => {
+  if (!text) return '';
+  return text.toUpperCase().trim();
+};
+
 export default function ProductModal() {
   const addToCart = useCartStore((state) => state.addToCart);
   const { isOpen, product, closeModal } = useProductModalStore();
@@ -30,7 +36,7 @@ export default function ProductModal() {
         <div className="sticky top-0 bg-gradient-to-r from-rose-50 to-pink-50 border-b border-rose-100 px-6 py-4 flex items-center justify-between rounded-t-2xl z-10">
           <div className="flex items-center space-x-2">
             <Sparkles className="w-5 h-5 text-rose-500" />
-            <h3 className="text-lg font-semibold text-gray-800">{product.name}</h3>
+            <h3 className="text-lg font-semibold text-gray-800">{normalizeText(product.name)}</h3>
           </div>
           <button
             onClick={closeModal}
@@ -64,7 +70,7 @@ export default function ProductModal() {
                 {product.isPopular && (
                   <div className="absolute top-3 right-3 bg-gradient-to-r from-amber-400 to-yellow-400 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-md flex items-center space-x-1">
                     <Crown className="w-3 h-3" />
-                    <span>PREMIUM</span>
+                    <span>POPULAR</span>
                   </div>
                 )}
               </div>
@@ -74,12 +80,12 @@ export default function ProductModal() {
             <div className="flex-1 space-y-4">
               {product.category && (
                 <span className="inline-block bg-gradient-to-r from-rose-100 to-pink-100 text-rose-700 text-xs px-3 py-1 rounded-full uppercase tracking-wider font-medium border border-rose-200">
-                  {product.category}
+                  {normalizeText(product.category)}
                 </span>
               )}
 
               {product.description && (
-                <p className="text-gray-600 text-sm leading-relaxed">{product.description}</p>
+                <p className="text-gray-600 text-sm leading-relaxed">{normalizeText(product.description)}</p>
               )}
 
               {/* Precio elegante */}

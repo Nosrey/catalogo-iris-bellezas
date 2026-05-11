@@ -134,11 +134,11 @@ export default function Home() {
 
   useEffect(() => {
     // Aplicar filtros cuando cambian los productos o los filtros
-    const filtered = filterProducts(products, filters);
+    const filtered = filterProducts(products, filters, availableBrands);
     setFilteredProducts(filtered);
     // Resetear a la primera página cuando cambian los filtros
     setCurrentPage(1);
-  }, [products, filters]);
+  }, [products, filters, availableBrands]);
 
   const handleSearch = (term: string) => {
     setFilters(prev => ({ ...prev, searchTerm: term }));
@@ -263,6 +263,7 @@ export default function Home() {
                 filters={filters}
                 onFiltersChange={setFilters}
                 availableBrands={availableBrands}
+                products={products}
               />
             </div>
 

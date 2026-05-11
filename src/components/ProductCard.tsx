@@ -11,6 +11,12 @@ interface ProductCardProps {
   product: Product;
 }
 
+// Normalizar texto a mayúsculas para presentación
+const normalizeText = (text: string | undefined): string => {
+  if (!text) return '';
+  return text.toUpperCase().trim();
+};
+
 export default function ProductCard({ product }: ProductCardProps) {
   const addToCart = useCartStore((state) => state.addToCart);
   const { openModal } = useProductModalStore();
@@ -20,7 +26,8 @@ export default function ProductCard({ product }: ProductCardProps) {
   };
 
   const truncateName = (name: string, maxLength: number = 34) => {
-    return name.length > maxLength ? name.substring(0, maxLength) + '...' : name;
+    const normalized = normalizeText(name);
+    return normalized.length > maxLength ? normalized.substring(0, maxLength) + '...' : normalized;
   };
 
   const isOutOfStock = product.stock === undefined || product.stock <= 0;
@@ -70,15 +77,15 @@ export default function ProductCard({ product }: ProductCardProps) {
         {/* Badge de categoría - estilo elegante */}
         {product.category && (
           <span className="absolute top-3 right-3 bg-gradient-to-r from-rose-400 to-rose-500 text-white text-[10px] px-3 py-1 rounded-full shadow-md uppercase tracking-wider font-medium">
-            {product.category.toUpperCase()}
+            {normalizeText(product.category)}
           </span>
         )}
         
-        {/* Badge de popularidad - estilo premium */}
+        {/* Badge de popularidad - estilo POPULAR */}
         {product.isPopular && (
           <span className="absolute bottom-3 right-3 bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 text-white text-[10px] font-bold px-3 py-1.5 rounded-full shadow-lg flex items-center space-x-1">
             <Heart className="w-3 h-3 fill-current" />
-            <span>PREMIUM</span>
+            <span>POPULAR</span>
           </span>
         )}
         
@@ -107,7 +114,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         <p className={`text-xs sm:text-sm mb-4 line-clamp-2 min-h-[2.5rem] text-gray-500 leading-relaxed ${
           isOutOfStock ? 'text-gray-400' : ''
         }`}>
-          {product.description}
+          {normalizeText(product.description)}
         </p>
         
         <div className="flex items-center justify-between">

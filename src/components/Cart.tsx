@@ -48,17 +48,21 @@ export default function Cart() {
         const unitPriceBs = item.adaptedPrices
           ? `Bs. ${item.adaptedPrices.bs.toLocaleString()}`
           : `Bs. ${(item.price * 35).toLocaleString()}`;
-        const unitPriceUsd = `$${item.price.toFixed(2)}`;
+        const unitPriceUsd = item.adaptedPrices
+          ? `$${item.adaptedPrices.usdAdjusted.toFixed(2)}`
+          : `$${item.price.toFixed(2)}`;
         const itemTotalBs = item.adaptedPrices
           ? `Bs. ${(item.adaptedPrices.bs * item.quantity).toLocaleString()}`
           : `Bs. ${(item.price * 35 * item.quantity).toLocaleString()}`;
-        const itemTotalUsd = `$${(item.price * item.quantity).toFixed(2)}`;
+        const itemTotalUsd = item.adaptedPrices
+          ? `$${(item.adaptedPrices.usdAdjusted * item.quantity).toFixed(2)}`
+          : `$${(item.price * item.quantity).toFixed(2)}`;
         return `${index + 1}. ID: ${item.id}\n   ${item.quantity}x ${item.name}\n   Precio unitario: ${unitPriceBs} (${unitPriceUsd})\n   Total: ${itemTotalBs} (${itemTotalUsd})`;
       })
       .join('\n\n');
 
     const totalBs = items.reduce((sum, item) => sum + (item.adaptedPrices?.bs || item.price * 35) * item.quantity, 0);
-    const totalUsd = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const totalUsd = items.reduce((sum, item) => sum + (item.adaptedPrices?.usdAdjusted || item.price) * item.quantity, 0);
 
     const fullMessage = `Hola! Quiero realizar el siguiente pedido:\n\n${message}\n\nTOTAL DEL PEDIDO: Bs. ${totalBs.toLocaleString()} ($${totalUsd.toFixed(2)})`;
 
